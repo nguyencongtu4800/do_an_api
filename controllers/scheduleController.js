@@ -1,0 +1,201 @@
+const Schedule = require('../model/scheduleModel');
+const Student = require('../model/studentModel'); // Giả sử bạn có model Student
+const moment = require('moment'); // Thư viện Moment.js để làm việc với thời gian
+
+const getStudentWeeklySchedule = async (req, res) => {
+
+  const { studentId } = req.body
+  try {
+
+    // 1. Lấy thông tin sinh viên để biết các lớp đã đăng ký
+    const student = await Student.findOne({ studentId: studentId });
+    if (!student) {
+      return res.status(404).json({
+        success: false,
+        message: "Student not found"
+      });
+    }
+
+    // 2. Lấy danh sách các mã lớp mà sinh viên đã đăng ký
+    const registeredClassIds = student.registeredClasses;
+
+    // 3. Lấy danh sách các buổi học (schedules) có classId trong danh sách các lớp mà sinh viên đã đăng ký
+    const startOfWeek = moment().startOf('week').toDate(); // Tính ngày bắt đầu tuần (Chủ Nhật)
+    const endOfWeek = moment().endOf('week').toDate(); // Tính ngày kết thúc tuần (Thứ Bảy)
+
+    const schedule = await Schedule.find({
+      classId: { $in: registeredClassIds },
+      startTime: { $gte: startOfWeek, $lte: endOfWeek } // Lọc các buổi học trong tuần này
+    }).sort({ startTime: 1 }); // Sắp xếp theo thời gian bắt đầu
+
+
+    // 4. Trả về kết quả
+    res.status(200).json({
+      success: true,
+      message: 'Schedules fetched successfully',
+      schedule: schedule
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error',
+    });
+  }
+};
+
+const addschedule = async (req, res) => {
+  try {
+    const { classId, sessionName, startTime, endTime } = req.body;
+
+    if (!classId || !sessionName || !startTime || !endTime) {
+      return res.status(400).json({ message: 'Thiếu thông tin buổi học.' });
+    }
+
+    const newSchedule = new Schedule({ classId, sessionName, startTime, endTime });
+    await newSchedule.save();
+
+    res.status(201).json({ message: 'Thêm buổi học thành công', data: newSchedule });
+  } catch (error) {
+    res.status(500).json({ message: 'Lỗi server', error: error.message });
+  }
+};
+
+// ❌ Xoá buổi học theo MongoDB _id
+const deleteschedule = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const deleted = await Schedule.findByIdAndDelete(id);
+
+    if (!deleted) {
+      return res.status(404).json({ message: 'Không tìm thấy buổi học để xoá.' });
+    }
+
+    res.json({ message: 'Xoá buổi học thành công', data: deleted });
+  } catch (error) {
+    res.status(500).json({ message: 'Lỗi server', error: error.message });
+  }
+};
+
+const getallschedule = async (req, res) => {
+  try {
+    const schedules = await Schedule.find().sort({ startTime: 1 }); // sắp xếp theo thời gian bắt đầu
+
+    res.json({
+      message: 'Lấy toàn bộ danh sách buổi học thành công',
+      data: schedules
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Lỗi server', error: error.message });
+  }
+};
+
+const checkSchedule = async (req, res) => {
+  const { studentId, classId, latitude, longitude } = req.body;
+
+  const lat1 = Number(latitude)
+  const lon1=Number(longitude)
+  console.log("vị trí ht",lat1,lon1)
+
+  if (!studentId || !classId || latitude == null || longitude == null) {
+
+    return res.status(400).json({
+      isValidSchedule: false,
+      message: 'Thiếu dữ liệu đầu vào.'
+    });
+  }
+
+  const SCHOOL_LAT = parseFloat(process.env.SCHOOL_LAT);
+  const SCHOOL_LNG = parseFloat(process.env.SCHOOL_LON);
+  const MAX_DISTANCE = parseFloat(process.env.MAX_DISTANCE_METERS || 5000); // meters
+
+  
+
+  try {
+
+    const now = new Date();
+
+    const student = await Student.findOne({ studentId: studentId });
+    if (!student) {
+      return res.status(404).json({
+        success: false,
+        message: "Student not found"
+      });
+    }
+
+    // console.log("cl", student.registeredClasses)
+
+    if (!Array.isArray(student.registeredClasses)) {
+        return res.status(400).json({ error: 'Trường registerClass không hợp lệ' });
+    }
+    // Kiểm tra đăng ký lớp học
+    if (!student.registeredClasses.includes(classId)) {
+        return res.status(403).json({ error: 'Sinh viên chưa đăng ký lớp học này' });
+    }
+
+    const schedule = await Schedule.findOne({
+      classId: classId,
+      startTime: { $lte: now },  // startTime <= now
+      endTime: { $gte: now }     // endTime >= now
+    });
+
+    if (!schedule) {
+      return res.json({
+        isValidSchedule: false,
+        message: 'Không tìm thấy lịch học hợp lệ.'
+      });
+    }
+
+
+    const distance = calculateDistance(lat1, lon1, SCHOOL_LAT, SCHOOL_LNG);
+    console.log("kc",distance)
+    if (distance > MAX_DISTANCE) {
+      return res.json({
+        isValidSchedule: false,
+        message: 'Bạn không ở đúng khu vực điểm danh.',
+        sessionnName: schedule.sessionName
+      });
+    }
+
+    return res.json({
+      isValidSchedule: true,
+      message: 'Lịch học hợp lệ.',
+      sessionName: schedule.sessionName || 'Buổi học'
+    });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({
+      isValidSchedule: false,
+      message: 'Lỗi server.'
+    });
+  }
+};
+
+module.exports = {
+  getStudentWeeklySchedule,
+  addschedule,
+  deleteschedule,
+  getallschedule,
+  checkSchedule
+};
+
+function calculateDistance(lat1, lon1, lat2, lon2) {
+  lat1 = parseFloat(lat1);
+  lon1 = parseFloat(lon1);
+  lat2 = parseFloat(lat2);
+  lon2 = parseFloat(lon2);
+  const R = 6371e3; // meters
+  const φ1 = lat1 * Math.PI / 180;
+  const φ2 = lat2 * Math.PI / 180;
+  const Δφ = (lat2 - lat1) * Math.PI / 180;
+  const Δλ = (lon2 - lon1) * Math.PI / 180;
+
+  const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+    Math.cos(φ1) * Math.cos(φ2) *
+    Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+  return R * c;
+}
