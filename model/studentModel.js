@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const bcrypt = require('bcryptjs');
 
 const studentSchema = new mongoose.Schema({
   fullName: {
@@ -29,5 +30,14 @@ const studentSchema = new mongoose.Schema({
 }, {
   timestamps: true
 });
+
+studentSchema.methods.comparePassword = function(password) {
+  return bcrypt.compare(password, this.password);
+};
+
+studentSchema.methods.setPassword = async function(newPassword) {
+  const hash = await bcrypt.hash(newPassword, 10);
+  this.password = hash;
+};
 
 module.exports = mongoose.model('Student', studentSchema);

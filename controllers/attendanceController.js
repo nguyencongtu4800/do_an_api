@@ -78,7 +78,7 @@ const historyAttendance= async (req, res) => {
       }
   
       // Truy vấn điểm danh của sinh viên theo studentId
-      const attendanceHistory = await Attendance.find({ studentId });
+      const attendanceHistory = await Attendance.find({ studentId }).sort({ attendanceTime: -1 });
       
       // Nếu không có điểm danh nào
       if (attendanceHistory.length === 0) {
@@ -142,11 +142,33 @@ const historyAttendance= async (req, res) => {
   }
 }
 
+const historyAttendancebyClass =async (req, res) => {
+    const { studentId, classId } = req.body;
+
+    if (!studentId || !classId) {
+        return res.status(400).json({ success: false, message: 'Thiếu studentId hoặc classCode' });
+    }
+
+    try {
+        const attendanceHistory = await Attendance.find({ studentId, classId }).sort({ attendanceTime: -1 });
+
+        res.json({
+            success: true,
+            message: 'Attendance history fetched successfully',
+            attendanceHistory
+        });
+    } catch (error) {
+        console.error('Lỗi lấy lịch sử điểm danh theo lớp:', error);
+        res.status(500).json({ success: false, message: 'Lỗi server' });
+    }
+};
+
 
 
 module.exports = {
     markAttendance,
     historyAttendance,
     addattendance, 
-    deletedAttendance
+    deletedAttendance,
+    historyAttendancebyClass
   };

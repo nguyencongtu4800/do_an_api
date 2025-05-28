@@ -90,8 +90,65 @@ const login = async (req, res) => {
   }
 };
 
+const changePassword= async (req, res) => {
+  try {
+    const { studentId, oldPassword, newPassword } = req.body;
+
+    if (!studentId || !oldPassword || !newPassword) {
+      return res.status(400).json({ success: false, message: 'Thiếu thông tin bắt buộc' });
+    }
+
+    const student = await Student.findOne({ studentId });
+    if (!student) {
+      return res.status(404).json({ success: false, message: 'Sinh viên không tồn tại' });
+    }
+
+    const isMatch = await student.comparePassword(oldPassword);
+    if (!isMatch) {
+      return res.status(401).json({ success: false, message: 'Mật khẩu cũ không đúng' });
+    }
+
+    await student.setPassword(newPassword);
+    await student.save();
+
+    return res.json({ success: true, message: 'Đổi mật khẩu thành công' });
+  } catch (error) {
+    console.error('Error in changePassword:', error);
+    return res.status(500).json({ success: false, message: 'Lỗi server' });
+  }
+};
+
+// const deleteStudent = async (req, res) => {
+//   try {
+  
+//     const { studentId} = req.body;
+
+//     if (!studentId ) {
+//       return res.status(400).json({ success: false, message: 'Thiếu thông tin bắt buộc' });
+//     }
+
+//     const deleted = await Student.findOneAndDelete({ studentId });
+
+//     if (!deleted) {
+//       return res.status(404).json({ success: false, message: 'Sinh viên không tồn tại' });
+//     }
+
+//     if (!deleted) {
+//       return res.status(404).json({ success: false, message: 'Sinh viên không tồn tại' });
+//     }
+
+//     return res.json({ success: true, message: 'Xoá sinh viên thành công' });
+//   } catch (error) {
+//     console.error('Lỗi khi xoá sinh viên:', error);
+//     return res.status(500).json({ success: false, message: 'Lỗi server' });
+//   }
+// };
+
 module.exports = {
     login,
-    signup
+    signup,
+    changePassword,
+    // deleteStudent
+
   };
   

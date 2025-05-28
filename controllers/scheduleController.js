@@ -1,6 +1,7 @@
 const Schedule = require('../model/scheduleModel');
 const Student = require('../model/studentModel'); // Giả sử bạn có model Student
 const moment = require('moment'); // Thư viện Moment.js để làm việc với thời gian
+const moment_time_zone = require('moment-timezone');
 
 const getStudentWeeklySchedule = async (req, res) => {
 
@@ -19,9 +20,10 @@ const getStudentWeeklySchedule = async (req, res) => {
     // 2. Lấy danh sách các mã lớp mà sinh viên đã đăng ký
     const registeredClassIds = student.registeredClasses;
 
-    // 3. Lấy danh sách các buổi học (schedules) có classId trong danh sách các lớp mà sinh viên đã đăng ký
-    const startOfWeek = moment().startOf('week').toDate(); // Tính ngày bắt đầu tuần (Chủ Nhật)
-    const endOfWeek = moment().endOf('week').toDate(); // Tính ngày kết thúc tuần (Thứ Bảy)
+    const vnTimeZone = 'Asia/Ho_Chi_Minh';
+
+    const startOfWeek = moment_time_zone.tz(vnTimeZone).startOf('week').utc().toDate();
+    const endOfWeek = moment_time_zone.tz(vnTimeZone).endOf('week').utc().toDate();
 
     const schedule = await Schedule.find({
       classId: { $in: registeredClassIds },
@@ -95,8 +97,8 @@ const checkSchedule = async (req, res) => {
   const { studentId, classId, latitude, longitude } = req.body;
 
   const lat1 = Number(latitude)
-  const lon1=Number(longitude)
-  console.log("vị trí ht",lat1,lon1)
+  const lon1 = Number(longitude)
+  console.log("vị trí ht", lat1, lon1)
 
   if (!studentId || !classId || latitude == null || longitude == null) {
 
@@ -110,7 +112,7 @@ const checkSchedule = async (req, res) => {
   const SCHOOL_LNG = parseFloat(process.env.SCHOOL_LON);
   const MAX_DISTANCE = parseFloat(process.env.MAX_DISTANCE_METERS || 5000); // meters
 
-  
+
 
   try {
 
@@ -127,11 +129,11 @@ const checkSchedule = async (req, res) => {
     // console.log("cl", student.registeredClasses)
 
     if (!Array.isArray(student.registeredClasses)) {
-        return res.status(400).json({ error: 'Trường registerClass không hợp lệ' });
+      return res.status(400).json({ error: 'Trường registerClass không hợp lệ' });
     }
     // Kiểm tra đăng ký lớp học
     if (!student.registeredClasses.includes(classId)) {
-        return res.status(403).json({ error: 'Sinh viên chưa đăng ký lớp học này' });
+      return res.status(403).json({ error: 'Sinh viên chưa đăng ký lớp học này' });
     }
 
     const schedule = await Schedule.findOne({
@@ -149,7 +151,7 @@ const checkSchedule = async (req, res) => {
 
 
     const distance = calculateDistance(lat1, lon1, SCHOOL_LAT, SCHOOL_LNG);
-    console.log("kc",distance)
+    console.log("kc", distance)
     if (distance > MAX_DISTANCE) {
       return res.json({
         isValidSchedule: false,
@@ -161,7 +163,7 @@ const checkSchedule = async (req, res) => {
     return res.json({
       isValidSchedule: true,
       message: 'Lịch học hợp lệ.',
-      sessionName: schedule.sessionName || 'Buổi học'
+      schedule: schedule
     });
 
   } catch (err) {

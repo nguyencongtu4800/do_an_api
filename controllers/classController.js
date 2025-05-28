@@ -135,10 +135,59 @@ const getregisterclass = async (req, res) => {
   }
 };
 
+const deleteStudentClass = async (req, res) => {
+  try {
+    const { studentId, classId } = req.body;
+
+    if (!studentId || !classId) {
+      return res.status(400).json({
+        success: false,
+        message: "studentId and classId are required",
+      });
+    }
+
+    // Tìm sinh viên theo studentId
+    const student = await Student.findOne({ studentId });
+    if (!student) {
+      return res.status(404).json({
+        success: false,
+        message: "Student not found",
+      });
+    }
+
+    // Kiểm tra lớp đã đăng ký chưa
+    if (!student.registeredClasses.includes(classId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Class not found in student's registered classes",
+      });
+    }
+
+    // Loại bỏ classId khỏi danh sách đăng ký
+    student.registeredClasses = student.registeredClasses.filter(id => id !== classId);
+
+    await student.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Class deleted successfully",
+      registeredClasses: student.registeredClasses,
+    });
+
+  } catch (error) {
+    console.error("Error deleting class:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+};
+
 module.exports = {
   registerClass,
   addclass,
   deleteclass,
   getallclass,
-  getregisterclass
+  getregisterclass,
+  deleteStudentClass
 };
