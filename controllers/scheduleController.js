@@ -112,8 +112,6 @@ const checkSchedule = async (req, res) => {
   const SCHOOL_LNG = parseFloat(process.env.SCHOOL_LON);
   const MAX_DISTANCE = parseFloat(process.env.MAX_DISTANCE_METERS || 5000); // meters
 
-
-
   try {
 
     const now = new Date();
@@ -156,14 +154,16 @@ const checkSchedule = async (req, res) => {
       return res.json({
         isValidSchedule: false,
         message: 'Bạn không ở đúng khu vực điểm danh.',
-        sessionnName: schedule.sessionName
+        sessionnName: schedule.sessionName,
+        distance: distance
       });
     }
 
     return res.json({
       isValidSchedule: true,
       message: 'Lịch học hợp lệ.',
-      schedule: schedule
+      schedule: schedule,
+      distance: distance
     });
 
   } catch (err) {

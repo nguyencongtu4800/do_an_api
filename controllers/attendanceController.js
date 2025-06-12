@@ -5,7 +5,7 @@ const Schedule = require('../model/scheduleModel');  // Model Schedule
 // Đăng ký điểm danh
 const markAttendance = async (req, res) => {
   try {
-    const { studentId, classId, sessionName, attendanceTime, photo } = req.body;
+    const { studentId, classId, sessionName, attendanceTime, photo, latitude, longitude, distance } = req.body;
 
     // Kiểm tra xem tất cả các trường bắt buộc đã được cung cấp chưa
     if (!studentId || !classId || !sessionName || !attendanceTime || !photo) {
@@ -39,7 +39,10 @@ const markAttendance = async (req, res) => {
       classId,
       sessionName,
       attendanceTime,
-      photo,  // Đường dẫn đến ảnh của sinh viên khi quét khuôn mặt
+      photo,
+      latitude,
+      longitude,
+      distance 
     });
 
     // Lưu điểm danh vào cơ sở dữ liệu
