@@ -63,7 +63,7 @@ const addschedule = async (req, res) => {
   }
 };
 
-// ❌ Xoá buổi học theo MongoDB _id
+
 const deleteschedule = async (req, res) => {
   try {
     const { id } = req.params;

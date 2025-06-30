@@ -9,7 +9,7 @@ const scheduleSchema = new mongoose.Schema({
   sessionName: {         //tuần 1/2
     type: String,
     required: true,
-    trim: true
+    trim: true,
   },
   startTime: {
     type: Date,  // Lưu ngày và giờ (tự động lưu theo múi giờ UTC)
@@ -22,5 +22,6 @@ const scheduleSchema = new mongoose.Schema({
 }, {
   timestamps: true  // Tự động tạo trường createdAt và updatedAt
 });
+
 
 module.exports = mongoose.model('Schedule', scheduleSchema);

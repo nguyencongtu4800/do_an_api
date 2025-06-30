@@ -16,7 +16,7 @@ const markAttendance = async (req, res) => {
     }
 
     // Kiểm tra xem sinh viên có tồn tại trong cơ sở dữ liệu không
-    const student = await Student.findOne({studentId: studentId});
+    const student = await Student.findOne({ studentId: studentId });
     if (!student) {
       return res.status(404).json({
         success: false,
@@ -25,7 +25,7 @@ const markAttendance = async (req, res) => {
     }
 
     // Kiểm tra xem buổi học và lớp học có tồn tại không
-    const schedule = await Schedule.findOne({ classId:classId, sessionName: sessionName });
+    const schedule = await Schedule.findOne({ classId: classId, sessionName: sessionName });
     if (!schedule) {
       return res.status(404).json({
         success: false,
@@ -42,7 +42,7 @@ const markAttendance = async (req, res) => {
       photo,
       latitude,
       longitude,
-      distance 
+      distance
     });
 
     // Lưu điểm danh vào cơ sở dữ liệu
@@ -66,74 +66,85 @@ const markAttendance = async (req, res) => {
 };
 
 
-const historyAttendance= async (req, res) => {
+const historyAttendance = async (req, res) => {
 
-    const {studentId} = req.body
+  const { studentId } = req.body
   console.log("sv", studentId)
-    try {
-      
-      const student = await Student.findOne({studentId: studentId});
-      if (!student) {
-        return res.status(404).json({
-          success: false,
-          message: 'Student not found',
-        });
-      }
-  
-      // Truy vấn điểm danh của sinh viên theo studentId
-      const attendanceHistory = await Attendance.find({ studentId }).sort({ attendanceTime: -1 });
-      
-      // Nếu không có điểm danh nào
-      if (attendanceHistory.length === 0) {
-        return res.status(404).json({
-          success: false,
-          message: 'No attendance records found for this student',
-        });
-      }
-  
-      // Trả về lịch sử điểm danh
-      return res.status(200).json({
-        success: true,
-        message: 'Attendance history fetched successfully',
-        attendanceHistory,  // Trả về dữ liệu điểm danh của sinh viên
-      });
-    } catch (error) {
-      // Xử lý lỗi trong trường hợp có lỗi
-      console.error(error);
-      return res.status(500).json({
+  try {
+
+    const student = await Student.findOne({ studentId: studentId });
+    if (!student) {
+      return res.status(404).json({
         success: false,
-        message: 'Server error. Please try again later.',
+        message: 'Student not found',
       });
     }
-  };
 
-  const addattendance= async (req, res) => {
-    try {
-      const { studentId, classId, sessionName, attendanceTime, photo } = req.body;
-  
-      // Kiểm tra thông tin bắt buộc
-      if (!studentId || !classId || !sessionName || !attendanceTime) {
-        return res.status(400).json({ message: 'Thiếu thông tin bắt buộc.' });
-      }
-  
-      const newAttendance = new Attendance({
-        studentId,
-        classId,
-        sessionName,
-        attendanceTime: new Date(attendanceTime),
-        photo: photo || null // nếu không có thì để null
+    const registeredClasses = student.registeredClasses; 
+
+    if (!registeredClasses || registeredClasses.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Student has not registered for any classes.',
       });
-  
-      await newAttendance.save();
-  
-      res.status(201).json({ message: 'Điểm danh thành công', data: newAttendance });
-    } catch (error) {
-      res.status(500).json({ message: 'Lỗi server', error: error.message });
     }
-  };
 
- const deletedAttendance= async (req, res) => {
-  const _id=req.params.id
+    const attendanceHistory = await Attendance.find({
+      studentId,
+      classId: { $in: registeredClasses },
+    }).sort({ attendanceTime: -1 });
+
+    // Nếu không có điểm danh nào
+    if (attendanceHistory.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'No attendance records found for this student',
+      });
+    }
+
+    // Trả về lịch sử điểm danh
+    return res.status(200).json({
+      success: true,
+      message: 'Attendance history fetched successfully',
+      attendanceHistory,  // Trả về dữ liệu điểm danh của sinh viên
+    });
+  } catch (error) {
+    // Xử lý lỗi trong trường hợp có lỗi
+    console.error(error);
+    return res.status(500).json({
+      success: false,
+      message: 'Server error. Please try again later.',
+    });
+  }
+};
+
+const addattendance = async (req, res) => {
+  try {
+    const { studentId, classId, sessionName, attendanceTime, photo } = req.body;
+
+    // Kiểm tra thông tin bắt buộc
+    if (!studentId || !classId || !sessionName || !attendanceTime) {
+      return res.status(400).json({ message: 'Thiếu thông tin bắt buộc.' });
+    }
+
+    const newAttendance = new Attendance({
+      studentId,
+      classId,
+      sessionName,
+      attendanceTime: new Date(attendanceTime),
+      photo: photo || null // nếu không có thì để null
+    });
+
+    await newAttendance.save();
+
+    res.status(201).json({ message: 'Điểm danh thành công', data: newAttendance });
+  } catch (error) {
+    res.status(500).json({ message: 'Lỗi server', error: error.message });
+  }
+};
+
+const deletedAttendance = async (req, res) => {
+  const _id = req.params.id
   try {
     const result = await Attendance.findByIdAndDelete(_id);
     if (!result) {
@@ -145,33 +156,33 @@ const historyAttendance= async (req, res) => {
   }
 }
 
-const historyAttendancebyClass =async (req, res) => {
-    const { studentId, classId } = req.body;
+const historyAttendancebyClass = async (req, res) => {
+  const { studentId, classId } = req.body;
 
-    if (!studentId || !classId) {
-        return res.status(400).json({ success: false, message: 'Thiếu studentId hoặc classCode' });
-    }
+  if (!studentId || !classId) {
+    return res.status(400).json({ success: false, message: 'Thiếu studentId hoặc classCode' });
+  }
 
-    try {
-        const attendanceHistory = await Attendance.find({ studentId, classId }).sort({ attendanceTime: -1 });
+  try {
+    const attendanceHistory = await Attendance.find({ studentId, classId }).sort({ attendanceTime: -1 });
 
-        res.json({
-            success: true,
-            message: 'Attendance history fetched successfully',
-            attendanceHistory
-        });
-    } catch (error) {
-        console.error('Lỗi lấy lịch sử điểm danh theo lớp:', error);
-        res.status(500).json({ success: false, message: 'Lỗi server' });
-    }
+    res.json({
+      success: true,
+      message: 'Attendance history fetched successfully',
+      attendanceHistory
+    });
+  } catch (error) {
+    console.error('Lỗi lấy lịch sử điểm danh theo lớp:', error);
+    res.status(500).json({ success: false, message: 'Lỗi server' });
+  }
 };
 
 
 
 module.exports = {
-    markAttendance,
-    historyAttendance,
-    addattendance, 
-    deletedAttendance,
-    historyAttendancebyClass
-  };
+  markAttendance,
+  historyAttendance,
+  addattendance,
+  deletedAttendance,
+  historyAttendancebyClass
+};
