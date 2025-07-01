@@ -24,7 +24,7 @@ const studentSchema = new mongoose.Schema({
     required: true
   },
   registeredClasses: {
-    type: [String], // danh sách mã lớp học
+    type: [String], 
     default: []
   }
 }, {

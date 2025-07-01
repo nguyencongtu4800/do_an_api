@@ -15,10 +15,10 @@ mongoose.set('strictQuery', false);
 const app = express();
 const server = require("http").createServer(app);
 
-// socket.io and then i added cors for cross origin to localhost only
+
 const io = require("socket.io")(server, {
   cors: {
-    origin: "*", //specific origin you want to give access to,
+    origin: "*", 
   },
 });
 
@@ -26,11 +26,11 @@ const io = require("socket.io")(server, {
 const cors = require("cors");
 const corsOptions = {
   origin: "*",
-  credentials: true, //access-control-allow-credentials:true
+  credentials: true, 
   optionSuccessStatus: 200,
 };
 
-app.use(cors(corsOptions)); // Use this after the variable declaration
+app.use(cors(corsOptions)); 
 
 //middle vware
 app.use(bodyParser.json());
@@ -50,7 +50,6 @@ mongoose
   .connect(process.env.MONGO_URI, {
   })
   .then(() => {
-    //listen for requests
     server.listen(process.env.PORT, () => {
       console.log(`Listening to port ${process.env.PORT}`);
     });

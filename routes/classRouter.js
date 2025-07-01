@@ -8,19 +8,11 @@ const {
   getallclass,
   getregisterclass,
   deleteStudentClass
-} = require('../controllers/classController');  // Đường dẫn đúng với file controller của bạn
-const { deleteStudent } = require('../controllers/studentController');
+} = require('../controllers/classController');  
 
-// Đăng ký lớp học cho sinh viên
 router.post('/classes/register', registerClass);
-
-// Thêm lớp mới
 router.post('/add', addclass);
-
-
-// Xoá lớp theo classId (tham số URL)
 router.delete('/delete/:classId', deleteclass);
-
 router.get("/classes",getallclass)
 router.post('/getregisterclass', getregisterclass);
 router.post('/classes/delete', deleteStudentClass);

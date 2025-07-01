@@ -12,15 +12,15 @@ const scheduleSchema = new mongoose.Schema({
     trim: true,
   },
   startTime: {
-    type: Date,  // Lưu ngày và giờ (tự động lưu theo múi giờ UTC)
+    type: Date,  
     required: true
   },
   endTime: {
-    type: Date,  // Lưu ngày và giờ (tự động lưu theo múi giờ UTC)
+    type: Date,  
     required: true
   }
 }, {
-  timestamps: true  // Tự động tạo trường createdAt và updatedAt
+  timestamps: true  
 });
 
 

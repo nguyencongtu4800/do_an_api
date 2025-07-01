@@ -1,7 +1,6 @@
 const Student = require("../model/studentModel");
 const Class = require("../model/classModel"); // Import model Class
 
-// Đăng ký lớp học cho sinh viên (có kiểm tra classId tồn tại)
 const registerClass = async (req, res) => {
   try {
     const { studentId, classId } = req.body;
@@ -13,7 +12,6 @@ const registerClass = async (req, res) => {
       });
     }
 
-    // Kiểm tra sinh viên có tồn tại
     const student = await Student.findOne({ studentId });
     if (!student) {
       return res.status(404).json({
@@ -22,7 +20,6 @@ const registerClass = async (req, res) => {
       });
     }
 
-    // Kiểm tra lớp có tồn tại
     const _class = await Class.findOne({ classId });
     if (!_class) {
       return res.status(404).json({
@@ -31,7 +28,6 @@ const registerClass = async (req, res) => {
       });
     }
 
-    // Kiểm tra nếu sinh viên đã đăng ký lớp
     if (student.registeredClasses.includes(classId)) {
       return res.status(400).json({
         success: false,
@@ -39,7 +35,6 @@ const registerClass = async (req, res) => {
       });
     }
 
-    // Thêm lớp vào danh sách đã đăng ký
     student.registeredClasses.push(classId);
     await student.save();
 
@@ -62,7 +57,7 @@ const addclass = async (req, res) => {
   try {
     const { classId, subjectId, subjectName } = req.body;
 
-    // Kiểm tra dữ liệu đầu vào
+
     if (!classId || !subjectId || !subjectName) {
       return res.status(400).json({ message: 'Thiếu thông tin lớp học.' });
     }
@@ -80,7 +75,7 @@ const addclass = async (req, res) => {
   }
 };
 
-// Xoá lớp theo classId
+// Xoá lớp theo classId admin
 const deleteclass = async (req, res) => {
   try {
     const classId = req.params;
@@ -106,12 +101,11 @@ const getallclass = async (req, res) => {
   }
 };
 
-const getregisterclass = async (req, res) => {  
+const getregisterclass = async (req, res) => {
 
   const { studentId } = req.body
   try {
 
-    // 1. Lấy thông tin sinh viên để biết các lớp đã đăng ký
     const student = await Student.findOne({ studentId: studentId });
     if (!student) {
       return res.status(404).json({
@@ -146,7 +140,6 @@ const deleteStudentClass = async (req, res) => {
       });
     }
 
-    // Tìm sinh viên theo studentId
     const student = await Student.findOne({ studentId });
     if (!student) {
       return res.status(404).json({
@@ -155,7 +148,6 @@ const deleteStudentClass = async (req, res) => {
       });
     }
 
-    // Kiểm tra lớp đã đăng ký chưa
     if (!student.registeredClasses.includes(classId)) {
       return res.status(400).json({
         success: false,
@@ -163,7 +155,6 @@ const deleteStudentClass = async (req, res) => {
       });
     }
 
-    // Loại bỏ classId khỏi danh sách đăng ký
     student.registeredClasses = student.registeredClasses.filter(id => id !== classId);
 
     await student.save();

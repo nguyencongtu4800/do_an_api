@@ -1,6 +1,6 @@
 const Schedule = require('../model/scheduleModel');
-const Student = require('../model/studentModel'); // Giả sử bạn có model Student
-const moment = require('moment'); // Thư viện Moment.js để làm việc với thời gian
+const Student = require('../model/studentModel'); 
+const moment = require('moment'); 
 const moment_time_zone = require('moment-timezone');
 
 const getStudentWeeklySchedule = async (req, res) => {
@@ -8,7 +8,6 @@ const getStudentWeeklySchedule = async (req, res) => {
   const { studentId } = req.body
   try {
 
-    // 1. Lấy thông tin sinh viên để biết các lớp đã đăng ký
     const student = await Student.findOne({ studentId: studentId });
     if (!student) {
       return res.status(404).json({
@@ -17,7 +16,6 @@ const getStudentWeeklySchedule = async (req, res) => {
       });
     }
 
-    // 2. Lấy danh sách các mã lớp mà sinh viên đã đăng ký
     const registeredClassIds = student.registeredClasses;
 
     const vnTimeZone = 'Asia/Ho_Chi_Minh';
@@ -27,11 +25,10 @@ const getStudentWeeklySchedule = async (req, res) => {
 
     const schedule = await Schedule.find({
       classId: { $in: registeredClassIds },
-      startTime: { $gte: startOfWeek, $lte: endOfWeek } // Lọc các buổi học trong tuần này
-    }).sort({ startTime: 1 }); // Sắp xếp theo thời gian bắt đầu
+      startTime: { $gte: startOfWeek, $lte: endOfWeek } 
+    }).sort({ startTime: 1 }); 
 
 
-    // 4. Trả về kết quả
     res.status(200).json({
       success: true,
       message: 'Schedules fetched successfully',
@@ -113,9 +110,7 @@ const checkSchedule = async (req, res) => {
   const MAX_DISTANCE = parseFloat(process.env.MAX_DISTANCE_METERS || 5000); // meters
 
   try {
-
     const now = new Date();
-
     const student = await Student.findOne({ studentId: studentId });
     if (!student) {
       return res.status(404).json({
@@ -124,12 +119,11 @@ const checkSchedule = async (req, res) => {
       });
     }
 
-    // console.log("cl", student.registeredClasses)
 
     if (!Array.isArray(student.registeredClasses)) {
       return res.status(400).json({ error: 'Trường registerClass không hợp lệ' });
     }
-    // Kiểm tra đăng ký lớp học
+    
     if (!student.registeredClasses.includes(classId)) {
       return res.status(403).json({ error: 'Sinh viên chưa đăng ký lớp học này' });
     }

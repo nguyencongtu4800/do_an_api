@@ -1,13 +1,12 @@
-const Attendance = require('../model/attendanceModel');  // Model Attendance
-const Student = require('../model/studentModel');  // Model Student
-const Schedule = require('../model/scheduleModel');  // Model Schedule
+const Attendance = require('../model/attendanceModel');  
+const Student = require('../model/studentModel');  
+const Schedule = require('../model/scheduleModel');  
 
-// Đăng ký điểm danh
+// Gửi điểm danh
 const markAttendance = async (req, res) => {
   try {
     const { studentId, classId, sessionName, attendanceTime, photo, latitude, longitude, distance } = req.body;
 
-    // Kiểm tra xem tất cả các trường bắt buộc đã được cung cấp chưa
     if (!studentId || !classId || !sessionName || !attendanceTime || !photo) {
       return res.status(400).json({
         success: false,
@@ -15,7 +14,6 @@ const markAttendance = async (req, res) => {
       });
     }
 
-    // Kiểm tra xem sinh viên có tồn tại trong cơ sở dữ liệu không
     const student = await Student.findOne({ studentId: studentId });
     if (!student) {
       return res.status(404).json({
@@ -24,7 +22,6 @@ const markAttendance = async (req, res) => {
       });
     }
 
-    // Kiểm tra xem buổi học và lớp học có tồn tại không
     const schedule = await Schedule.findOne({ classId: classId, sessionName: sessionName });
     if (!schedule) {
       return res.status(404).json({
@@ -33,7 +30,7 @@ const markAttendance = async (req, res) => {
       });
     }
 
-    // Tạo thông tin điểm danh mới
+    
     const newAttendance = new Attendance({
       studentId,
       classId,
@@ -45,18 +42,16 @@ const markAttendance = async (req, res) => {
       distance
     });
 
-    // Lưu điểm danh vào cơ sở dữ liệu
+    
     await newAttendance.save();
 
-    // Trả về phản hồi thành công
     return res.status(200).json({
       success: true,
       message: 'Attendance marked successfully',
-      attendance: newAttendance,  // Trả về thông tin điểm danh vừa lưu
+      attendance: newAttendance, 
     });
 
   } catch (error) {
-    // Nếu có lỗi xảy ra trong quá trình xử lý, trả về thông báo lỗi
     console.error(error);
     return res.status(500).json({
       success: false,
@@ -65,7 +60,7 @@ const markAttendance = async (req, res) => {
   }
 };
 
-
+// Lịch sử all
 const historyAttendance = async (req, res) => {
 
   const { studentId } = req.body
@@ -94,7 +89,7 @@ const historyAttendance = async (req, res) => {
       classId: { $in: registeredClasses },
     }).sort({ attendanceTime: -1 });
 
-    // Nếu không có điểm danh nào
+  
     if (attendanceHistory.length === 0) {
       return res.status(404).json({
         success: false,
@@ -102,14 +97,12 @@ const historyAttendance = async (req, res) => {
       });
     }
 
-    // Trả về lịch sử điểm danh
     return res.status(200).json({
       success: true,
       message: 'Attendance history fetched successfully',
-      attendanceHistory,  // Trả về dữ liệu điểm danh của sinh viên
+      attendanceHistory,  
     });
   } catch (error) {
-    // Xử lý lỗi trong trường hợp có lỗi
     console.error(error);
     return res.status(500).json({
       success: false,
@@ -118,6 +111,7 @@ const historyAttendance = async (req, res) => {
   }
 };
 
+//admin
 const addattendance = async (req, res) => {
   try {
     const { studentId, classId, sessionName, attendanceTime, photo } = req.body;
@@ -132,7 +126,7 @@ const addattendance = async (req, res) => {
       classId,
       sessionName,
       attendanceTime: new Date(attendanceTime),
-      photo: photo || null // nếu không có thì để null
+      photo: photo || null 
     });
 
     await newAttendance.save();
